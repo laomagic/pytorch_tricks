@@ -5,6 +5,26 @@ import jieba_fast as jieba
 from gensim.models import Word2Vec
 import torch.nn as nn
 import torch
+from torch.autograd import Variable
+
+
+class PositionalEncoding(nn.Module):
+    """相对的位置编码"""
+    def __init__(self, d_model, dropout=0.1, max_len=200):
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(dropout)
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model))
+
+        pe[:, 0::2] = torch.sin(position * div_term)  # 偶数列
+        pe[:, 1::2] = torch.cos(position * div_term)  # 奇数列
+        pe = pe.unsqueeze(0)
+        self.register_buffer("pe", pe)
+
+    def forward(self, x):
+        x = x + Variable(self.pe[:, x.size(1)], requires_grad=False)
+        return self.dropout(x)
 
 
 
@@ -75,3 +95,21 @@ if __name__ == '__main__':
     char_ids = [mix_emb.word2id.get(char, 0) for char in text]
     input_ids = torch.tensor([char_ids, word_ids])
     s = mix_emb(input_ids)
+    # emb_dim = 64
+    # max_seq_len = 100
+    # seq_len = 20
+    # DEVICE = torch.device("cpu")
+    # pe = PositionalEncoding(emb_dim, 0, max_seq_len)
+    # x = torch.zeros(1, seq_len, emb_dim, device=DEVICE)
+    # positional_encoding = pe(x)
+    # plt.figure()
+    # sns.heatmap(positional_encoding.squeeze().to("cpu"))
+    # plt.xlabel("i")
+    # plt.ylabel("pos")
+    # plt.show()
+    #
+    # plt.figure()
+    # y = positional_encoding.to("cpu").numpy()
+    # plt.plot(np.arange(seq_len), y[0, :, 0: 64: 8], ".")
+    # plt.legend(["dim %d" % p for p in [0, 7, 15, 31, 63]])
+    # plt.show()
