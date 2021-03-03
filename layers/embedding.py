@@ -6,6 +6,7 @@ from gensim.models import Word2Vec
 import torch.nn as nn
 import torch
 from torch.autograd import Variable
+import math
 
 
 class PositionalEncoding(nn.Module):
